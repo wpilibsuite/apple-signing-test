@@ -8,17 +8,40 @@ plugins {
     id 'com.diffplug.spotless' version '5.5.0'
 }
 
+ext {
+    nativeName = 'helloworld'
+}
+
 model {
     components {
-        helloworld(NativeExecutableSpec) {
-            baseName = 'helloworld'
+        "${nativeName}"(NativeLibrarySpec) {
             sources {
                 cpp {
                     source {
                         srcDirs 'src/main/native/cpp'
                         include '**/*.cpp'
                     }
+                    exportedHeaders {
+                        srcDir 'src/main/native/include'
+                        include '**/*.h'
+                    }
                 }
+            }
+        }
+        "${nativeName}Dev"(NativeExecutableSpec) {
+            sources {
+                cpp {
+                    source {
+                        srcDirs 'src/dev/native/cpp'
+                        include '**/*.cpp'
+                    }
+                    exportedHeaders {
+                        srcDir 'src/dev/native/include'
+                    }
+                }
+            }
+            binaries.all {
+                lib library: nativeName, linkage: 'shared'
             }
         }
     }
