@@ -1,0 +1,79 @@
+plugins {
+    id 'cpp'
+    id 'c'
+    id 'edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin' version '4.1.0'
+    id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
+    id "edu.wpi.first.NativeUtils" version "2022.0.0"
+    id 'edu.wpi.first.GradleJni' version '0.10.1'
+    id 'com.diffplug.spotless' version '5.5.0'
+}
+
+model {
+    components {
+        helloworld(NativeExecutableSpec) {
+            baseName = 'helloworld'
+            sources {
+                cpp {
+                    source {
+                        srcDirs 'src/main/native/cpp'
+                        include '**/*.cpp'
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Sign outputs with Developer ID
+if (project.hasProperty("developerID")) {
+    tasks.withType(AbstractLinkTask) { task ->
+        // Don't sign any executables because codesign complains
+        // about relative rpath.
+        if (!(task instanceof LinkExecutable)) {
+            doLast {
+                // Get path to binary.
+                String path = task.getLinkedFile().getAsFile().get().getAbsolutePath()
+                exec {
+                    workingDir rootDir
+                    def args = [
+                        "sh",
+                        "-c",
+                        "codesign --force --strict --timestamp --options=runtime " +
+                        "--verbose -s ${project.findProperty("developerID")} ${path}"
+                    ]
+                    commandLine args
+                }
+            }
+        }
+    }
+}
+
+ext.getCurrentArch = {
+    return NativePlatforms.desktop
+}
+
+spotless {
+    groovyGradle {
+        target fileTree('.') {
+            include '**/*.gradle'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        greclipse()
+        indentWithSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'misc', {
+        target fileTree('.') {
+            include '**/*.md', '**/.gitignore'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        trimTrailingWhitespace()
+        indentWithSpaces(2)
+        endWithNewline()
+    }
+}
+
+wrapper {
+    gradleVersion = '6.0.1'
+}
