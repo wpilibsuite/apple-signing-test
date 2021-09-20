@@ -21,6 +21,8 @@ jobs:
           keychain-password: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
       - name: Set Keychain Lock Timeout
         run: security set-keychain-settings -lut 3600
+      - name: Find all identities
+        run: security find-identity
       - name: Build with Gradle
         run: ./gradlew build
       - name: Sign Libraries with Developer ID
